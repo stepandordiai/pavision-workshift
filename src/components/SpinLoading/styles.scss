@@ -1,0 +1,22 @@
+.spin-loading {
+	position: relative;
+	width: 16px;
+	aspect-ratio: 1/1;
+	border-radius: 50%;
+	background: conic-gradient(var(--spin-bg-clr) 50%, transparent 0%);
+	animation: spin 1s infinite linear;
+
+	&:after {
+		content: "";
+		position: absolute;
+		border-radius: inherit;
+		background: var(--spin-after-bg-clr);
+		inset: 2px;
+	}
+}
+
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}

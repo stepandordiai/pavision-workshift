@@ -1,0 +1,71 @@
+.login-main {
+	display: flex;
+	justify-content: space-evenly;
+	align-items: center;
+	flex-direction: column;
+	gap: 10px;
+	height: calc(100svh - 40px);
+}
+
+.login__logo {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+}
+
+.login-form {
+	outline: 2px solid hsl(0, 0%, 95%);
+	outline-offset: -2px;
+	padding: 1.5rem;
+	border-radius: 10px;
+	width: min(100%, 500px);
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.login__form-heading {
+	font-weight: 500;
+	font-size: 1.5rem;
+}
+
+.login-input-container {
+	display: flex;
+	flex-direction: column;
+
+	label {
+		font-weight: 500;
+	}
+
+	input {
+		outline: 2px solid hsl(0, 0%, 95%);
+		outline-offset: -2px;
+		padding: 10px;
+		border-radius: 10px;
+
+		&:focus {
+			outline: 2px solid hsl(0, 0%, 0%);
+		}
+	}
+}
+
+.login-submit-btn {
+	background: hsl(0, 0%, 95%);
+	color: #000000;
+	padding: 0.5rem;
+	border-radius: 10px;
+
+	&:active {
+		background: hsl(0, 0%, 0%);
+		color: #fff;
+	}
+}
+
+.underline-effect {
+	text-decoration: 2px underline hsl(0, 0%, 95%) !important;
+
+	&:hover {
+		text-decoration: 2px underline hsl(0, 0%, 0%) !important;
+	}
+}

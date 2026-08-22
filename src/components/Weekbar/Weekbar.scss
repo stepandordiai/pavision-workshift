@@ -1,0 +1,53 @@
+.weekbar {
+	display: flex;
+	justify-content: space-between;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.weekbar-container {
+	display: flex;
+	gap: 5px;
+	flex-wrap: wrap;
+}
+
+.weekbar-input-container {
+	display: flex;
+	flex-direction: column;
+	background: #fff;
+	padding: 10px;
+	border-radius: 10px;
+}
+
+.weekbar__input {
+	padding: 5px;
+	border-radius: 5px;
+	// width: 100%;
+	outline: 2px solid hsl(0, 0%, 95%);
+	outline-offset: -2px;
+
+	&--disabled {
+		border: none;
+	}
+}
+
+.weekbar__btn {
+	padding: 5px;
+	border-radius: 5px;
+	background: hsl(0, 0%, 95%);
+	flex: 1;
+
+	&--active {
+		background: rgb(166, 166, 188);
+		color: #fff;
+	}
+
+	&--selected {
+		background: blue;
+		color: #fff;
+	}
+}
+
+.weekbar-input-lable {
+	font-weight: 500;
+}

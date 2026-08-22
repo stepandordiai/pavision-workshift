@@ -1,0 +1,26 @@
+.status-indicator {
+	display: flex;
+	justify-content: flex-start;
+	align-items: center;
+	gap: 5px;
+	margin-top: auto;
+}
+
+.status-indicator__status {
+	width: 16px;
+	aspect-ratio: 1/1;
+	// border-radius: 50%;
+	border-radius: 5px;
+}
+
+.status--error {
+	background: #f00;
+}
+
+.status--loading {
+	background: orange;
+}
+
+.status--ok {
+	background: #0f0;
+}

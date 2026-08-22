@@ -1,0 +1,33 @@
+.switch-btn {
+	position: relative;
+	width: 40px;
+	height: 20px;
+	background: #000;
+	border-radius: 10px;
+	transition: background-color 0.3s;
+
+	&::before {
+		content: "";
+		position: absolute;
+		height: calc(100% - 4px);
+		aspect-ratio: 1/1;
+		background: #fff;
+		border-radius: inherit;
+		left: 2px;
+		top: 2px;
+		transition: transform 0.3s;
+	}
+
+	&--active {
+		background: rgb(110, 150, 0);
+
+		&::before {
+			transform: translateX(calc(100% + 4px));
+		}
+	}
+
+	&--disabled {
+		opacity: 0.5 !important;
+		pointer-events: none;
+	}
+}
