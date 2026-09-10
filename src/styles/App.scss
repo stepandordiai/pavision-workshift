@@ -23,10 +23,9 @@ body {
 .main {
 	padding: 20px;
 	border-radius: 10px;
-	flex-grow: 1;
+	// flex-grow: 1;
 	overflow: auto;
 	height: calc(100svh - 40px);
-	// background: #fff;
 	background: hsl(0, 0%, 95%);
 	display: flex;
 	flex-direction: column;
@@ -56,44 +55,6 @@ body {
 	font-weight: 500;
 	font-size: 1.25rem;
 }
-
-// .table {
-// 	border-collapse: collapse;
-
-// 	td {
-// 		// width: 1%; // shrink to fit content
-// 		width: 100%;
-// 		white-space: nowrap; // prevent text wrapping when squeezed
-// 		padding: 10px;
-// 		border-bottom: 2px solid var(--bg-clr);
-// 	}
-
-// 	thead {
-// 		position: sticky;
-// 		top: 0;
-// 		z-index: 1;
-// 		background: #000;
-// 		color: #fff;
-
-// 		th {
-// 			text-align: left;
-// 			width: 1%; // shrink to fit content
-// 			white-space: nowrap; // prevent text wrapping when squeezed
-// 			padding: 10px;
-
-// 			&:nth-of-type(1) {
-// 				border-radius: 10px 0 0 10px;
-// 			}
-
-// 			&:nth-last-of-type(1) {
-// 				border-radius: 0 10px 10px 0;
-// 			}
-// 		}
-
-// 		tr {
-// 		}
-// 	}
-// }
 
 .banner {
 	position: fixed;

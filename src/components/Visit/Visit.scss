@@ -17,11 +17,11 @@
 	border-collapse: collapse;
 
 	td {
-		width: 100%;
+		// width: 100%;
 		padding-bottom: 5px;
 	}
 
-	width: 100%;
+	// width: 100%;
 
 	th {
 		white-space: nowrap;
@@ -33,19 +33,69 @@
 		td:nth-child(1) {
 			padding-right: 5px;
 		}
+		td:nth-child(2) {
+			padding-right: 5px;
+		}
 	}
+}
+
+.workshift__grid {
+	display: grid;
+	grid-template-columns: max-content minmax(0, 1fr) 100px;
+	gap: 5px;
+
+	&:not(:nth-last-child(1)) {
+		padding-bottom: 5px;
+		border-bottom: 2px dashed #000;
+	}
+
+	&:not(:nth-child(1)) {
+		padding-top: 5px;
+	}
+}
+
+.visit-input-container {
+	width: 100px;
+	min-width: 100px;
 }
 
 .workshift__label {
 	font-weight: 500;
 }
 
+.workshift__input-wrapper {
+	position: relative;
+}
+
 .workshift__input {
 	padding: 5px;
 	border-radius: 5px;
 	width: 100%;
+	min-width: 100px;
 	outline: 2px solid hsl(0, 0%, 95%);
 	outline-offset: -2px;
+
+	&:focus {
+		outline: 2px solid hsl(0, 0%, 0%);
+		outline-offset: -2px;
+	}
+}
+
+.workshift__input-clear {
+	position: absolute;
+	right: 5px;
+	top: 50%;
+	transform: translateY(-50%);
+	height: calc(100% - 10px);
+	background: red;
+	aspect-ratio: 1/1;
+	border-radius: 5px;
+	color: #fff;
+
+	&--disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
 }
 
 .workshift__day {
@@ -53,8 +103,9 @@
 	writing-mode: sideways-lr;
 	background: hsl(0, 0%, 95%);
 	border-radius: 10px;
-	padding: 5px;
+	padding: 10px 5px;
 	text-align: center;
+	font-weight: 500;
 }
 
 .workshift__btn {
@@ -63,4 +114,10 @@
 	padding: 5px;
 	border-radius: 10px;
 	width: 100%;
+}
+
+@media screen and (width < 600px) {
+	.workshift__grid {
+		grid-template-columns: 1fr;
+	}
 }

@@ -1,23 +1,13 @@
 import Weekbar from "../../components/Weekbar/Weekbar";
 import { useParams } from "react-router-dom";
 import Visit from "../../components/Visit/Visit";
-// import { supabase } from "../../../lib/supabase";
 import { supabase } from "../../lib/supabase";
-
-// import { useAuth } from "../../context/AuthContext";
-// import Responsibilities from "../../components/Responsibilities/Responsibilities";
 import { useEffect, useState } from "react";
-// import Plan from "../../components/Plan/Plan";
-// import Period from "../../components/Period/Period";
-// import classNames from "classnames";
-// import Footer from "../../components/layout/Footer/Footer";
 import "./UserPage.scss";
 
 const UserPage = () => {
 	const { id } = useParams<string>();
 	const today = new Date();
-
-	// const [data, setData] = useState<{ id: string; full_name: string }[]>([]);
 	const [error, setError] = useState<string | null>(null);
 	const [authUser, setAuthUser] = useState<{ id: string } | null>(null);
 	const [viewedUser, setViewedUser] = useState<{

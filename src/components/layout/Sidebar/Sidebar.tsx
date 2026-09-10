@@ -1,10 +1,11 @@
 import { NavLink } from "react-router-dom";
 import { supabase } from "../../../lib/supabase";
-import "./styles.scss";
 import { useEffect, useState } from "react";
 import BoxArrowLeftIcon from "../../icons/BoxArrowLeftIcon";
 import { extractNameInitials } from "../../../utils/helpers";
 import HouseIcon from "../../icons/HouseIcon";
+import "./styles.scss";
+import TeamIcon from "../../icons/TeamIcon";
 
 const Sidebar = () => {
 	const handleLogout = async () => {
@@ -83,30 +84,17 @@ const Sidebar = () => {
 						})}
 					</div>
 				</div>
-				{/* <NavLink
-					className={({ isActive }) =>
-						`sidebar-nav__link ${isActive ? "sidebar-nav__link--active" : ""}`
-					}
-					to={"/products"}
-				>
-					Products
-				</NavLink>
 				<NavLink
 					className={({ isActive }) =>
-						`sidebar-nav__link ${isActive ? "sidebar-nav__link--active" : ""}`
+						`sidebar__nav-link ${isActive ? "sidebar__nav-link--selected" : ""}`
 					}
 					to={"/clients"}
 				>
-					Clients
+					<span>
+						<TeamIcon />
+					</span>
+					<span>Clients</span>
 				</NavLink>
-				<NavLink
-					className={({ isActive }) =>
-						`sidebar-nav__link ${isActive ? "sidebar-nav__link--active" : ""}`
-					}
-					to={"/bookings"}
-				>
-					Bookings
-				</NavLink> */}
 			</nav>
 			<div className="sidebar__current-user" style={{ marginTop: "auto" }}>
 				<NavLink

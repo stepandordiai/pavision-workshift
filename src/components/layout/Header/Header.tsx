@@ -7,6 +7,7 @@ import { supabase } from "../../../lib/supabase";
 import BoxArrowLeftIcon from "../../icons/BoxArrowLeftIcon";
 import "./Header.scss";
 import HouseIcon from "../../icons/HouseIcon";
+import TeamIcon from "../../icons/TeamIcon";
 
 const Header = ({}) => {
 	const [menuVisible, setMenuVisible] = useState(false);
@@ -177,6 +178,18 @@ const Header = ({}) => {
 						</>
 					)}
 				</div>
+				<NavLink
+					onClick={() => setMenuVisible(false)}
+					className={({ isActive }) =>
+						`sidebar__nav-link ${isActive ? "sidebar__nav-link--selected" : ""}`
+					}
+					to="/clients"
+				>
+					<span>
+						<TeamIcon />
+					</span>
+					<span>Clients</span>
+				</NavLink>
 				<div className="sidebar__current-user" style={{ marginTop: "auto" }}>
 					<NavLink
 						onClick={() => setMenuVisible(false)}

@@ -14,6 +14,7 @@ import Login from "./pages/Login/Login";
 import ResetPassword from "./pages/ResetPassword/ResetPassword";
 import "./styles/App.scss";
 import UserPage from "./pages/UserPage/UserPage";
+import Clients from "./pages/Clients/Clients";
 
 function App() {
 	const [session, setSession] = useState<Session | null>(null);
@@ -60,6 +61,7 @@ function App() {
 										<Routes>
 											<Route path="/" element={<Home />} />
 											<Route path="/users/:id" element={<UserPage />} />
+											<Route path="/clients" element={<Clients />} />
 										</Routes>
 
 										{/* <Footer /> */}

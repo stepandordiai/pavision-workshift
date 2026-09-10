@@ -2,11 +2,9 @@
 	position: sticky;
 	bottom: 0;
 	padding: 20px;
-	border-top: 2px solid hsl(0, 0%, 90%);
+	border-radius: 10px;
 	display: flex;
-	background: rgba(255, 255, 255, 0.8);
-	-webkit-backdrop-filter: blur(20px);
-	backdrop-filter: blur(20px);
+	background: #000;
 	justify-content: space-between;
 }
 
