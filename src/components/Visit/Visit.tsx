@@ -1,23 +1,11 @@
 import { useEffect, useState } from "react";
 import timeToMinutes from "../../utils/timeToMinutes";
-import StatusIndicator from "../StatusIndicator/StatusIndicator";
-// import ClockIcon from "../../icons/ClockIcon";
 import ClockIcon from "../icons/ClockIcon";
 import classNames from "classnames";
 import { supabase } from "../../lib/supabase";
 import AutoGrowTextArea from "../AutoGrowTextArea/AutoGrowTextArea";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import "./Visit.scss";
-
-type VisitProps = {
-	userId: string | undefined;
-	currentUser: {
-		id: string;
-	} | null;
-	shiftDate: string;
-	// setShiftDate: React.Dispatch<React.SetStateAction<boolean>>;
-	isWeek: boolean;
-	isMonth: boolean;
-};
 
 type WorkDoneEntry = {
 	id: string;
@@ -43,10 +31,10 @@ type WeekShift = {
 	workDone: WorkDoneEntry[];
 };
 
-// TODO: learn this
-const getWeekdayName = (dateStr: string) => {
-	const date = new Date(dateStr);
-	return date.toLocaleDateString("en-US", { weekday: "long" });
+const parseLocalDate = (dateStr: string) => {
+	const [year, month, day] = dateStr.split("-").map(Number);
+
+	return new Date(year, month - 1, day);
 };
 
 const toLocalDateString = (date: Date) => {
@@ -56,10 +44,42 @@ const toLocalDateString = (date: Date) => {
 	return `${year}-${month}-${day}`;
 };
 
+// TODO: learn this
+const getWeekdayName = (dateStr: string) => {
+	const date = parseLocalDate(dateStr);
+	return date.toLocaleDateString("en-US", { weekday: "long" });
+};
+
+// Get current week dates
+const getWeekDates = (dateStr: string) => {
+	const date = parseLocalDate(dateStr);
+	const day = date.getDay(); // 0 = Sunday, 1 = Monday, ...
+	const diffToMonday = day === 0 ? -6 : 1 - day;
+
+	const monday = new Date(date);
+	monday.setDate(date.getDate() + diffToMonday);
+
+	return Array.from({ length: 7 }, (_, i) => {
+		const d = new Date(monday);
+		d.setDate(monday.getDate() + i);
+		return toLocalDateString(d);
+	});
+};
+
+// Get current month dates
+const getMonthDates = (dateStr: string) => {
+	const [year, month] = dateStr.split("-").map(Number);
+	const daysInMonth = new Date(year, month, 0).getDate();
+
+	return Array.from({ length: daysInMonth }, (_, i) => {
+		const d = new Date(year, month - 1, i + 1);
+		return toLocalDateString(d);
+	});
+};
+
 type DayRowProps = {
 	day: WeekShift;
 	editable: boolean;
-	loading: boolean;
 	onDataInput: (shiftDate: string, name: string, value: string) => void;
 	onWorkDoneChange: (
 		shiftDate: string,
@@ -68,19 +88,20 @@ type DayRowProps = {
 		value: string,
 	) => void;
 	onAddWorkDone: (shiftDate: string) => void;
-	onBlurSave: (day: WeekShift) => void;
+	onBlurSave: (day: WeekShift) => Promise<void>;
 	clients: Client[];
+	saving: boolean;
 };
 
 const DayRow = ({
 	day,
 	editable,
-	loading,
 	onDataInput,
 	onWorkDoneChange,
 	onAddWorkDone,
 	onBlurSave,
 	clients,
+	saving,
 }: DayRowProps) => (
 	<div style={{ display: "flex", gap: "5px" }}>
 		<div className="workshift__day">
@@ -151,16 +172,16 @@ const DayRow = ({
 									});
 								}}
 								className={classNames("workshift__input", {
-									"workshift__input--disabled": !editable || loading,
+									"workshift__input--disabled": !editable || saving,
 								})}
-								disabled={!editable || loading}
+								disabled={!editable || saving}
 							/>
 
 							<button
 								type="button"
 								className={classNames("workshift__input-clear", {
 									"workshift__input-clear--disabled":
-										!day.startTime || !editable || loading,
+										!day.startTime || !editable || saving,
 								})}
 								onClick={() => {
 									onDataInput(day.shiftDate, "startTime", "");
@@ -170,7 +191,7 @@ const DayRow = ({
 									});
 								}}
 								aria-label="Clear start time"
-								disabled={!day.startTime || !editable || loading}
+								disabled={!day.startTime || !editable || saving}
 							>
 								×
 							</button>
@@ -232,16 +253,16 @@ const DayRow = ({
 									// onBlurSave(day);
 								}}
 								className={classNames("workshift__input", {
-									"workshift__input--disabled": !editable || loading,
+									"workshift__input--disabled": !editable || saving,
 								})}
-								disabled={!editable || loading}
+								disabled={!editable || saving}
 							/>
 
 							<button
 								type="button"
 								className={classNames("workshift__input-clear", {
 									"workshift__input-clear--disabled":
-										!day.endTime || !editable || loading,
+										!day.endTime || !editable || saving,
 								})}
 								onClick={() => {
 									onDataInput(day.shiftDate, "endTime", "");
@@ -251,7 +272,7 @@ const DayRow = ({
 									});
 								}}
 								aria-label="Clear start time"
-								disabled={!day.endTime || !editable || loading}
+								disabled={!day.endTime || !editable || saving}
 							>
 								×
 							</button>
@@ -312,16 +333,16 @@ const DayRow = ({
 									});
 								}}
 								className={classNames("workshift__input", {
-									"workshift__input--disabled": !editable || loading,
+									"workshift__input--disabled": !editable || saving,
 								})}
-								disabled={!editable || loading}
+								disabled={!editable || saving}
 							/>
 
 							<button
 								type="button"
 								className={classNames("workshift__input-clear", {
 									"workshift__input-clear--disabled":
-										!day.pauseTime || !editable || loading,
+										!day.pauseTime || !editable || saving,
 								})}
 								onClick={() => {
 									onDataInput(day.shiftDate, "pauseTime", "");
@@ -331,7 +352,7 @@ const DayRow = ({
 									});
 								}}
 								aria-label="Clear start time"
-								disabled={!day.pauseTime || !editable || loading}
+								disabled={!day.pauseTime || !editable || saving}
 							>
 								×
 							</button>
@@ -391,16 +412,16 @@ const DayRow = ({
 									});
 								}}
 								className={classNames("workshift__input", {
-									"workshift__input--disabled": !editable || loading,
+									"workshift__input--disabled": !editable || saving,
 								})}
-								disabled={!editable || loading}
+								disabled={!editable || saving}
 							/>
 
 							<button
 								type="button"
 								className={classNames("workshift__input-clear", {
 									"workshift__input-clear--disabled":
-										!day.overTime || !editable || loading,
+										!day.overTime || !editable || saving,
 								})}
 								onClick={() => {
 									onDataInput(day.shiftDate, "overTime", "");
@@ -410,7 +431,7 @@ const DayRow = ({
 									});
 								}}
 								aria-label="Clear start time"
-								disabled={!day.overTime || !editable || loading}
+								disabled={!day.overTime || !editable || saving}
 							>
 								×
 							</button>
@@ -427,7 +448,9 @@ const DayRow = ({
 									<div className="workshift__label">Client</div>
 									<select
 										style={{ width: "auto" }}
-										className="workshift__input"
+										className={classNames("workshift__input", {
+											"workshift__input--disabled": !editable || saving,
+										})}
 										name="clientId"
 										value={item.clientId}
 										onChange={(e) =>
@@ -440,7 +463,7 @@ const DayRow = ({
 											)
 										}
 										onBlur={() => onBlurSave(day)}
-										disabled={!editable || loading}
+										disabled={!editable || saving}
 									>
 										<option value="">Select client</option>
 
@@ -465,7 +488,7 @@ const DayRow = ({
 										}
 										name="task"
 										blur={() => onBlurSave(day)}
-										disable={!editable || loading}
+										disable={!editable || saving}
 									/>
 								</div>
 								<div>
@@ -535,15 +558,15 @@ const DayRow = ({
 												onBlurSave(updatedDay);
 											}}
 											className={classNames("workshift__input", {
-												"workshift__input--disabled": !editable || loading,
+												"workshift__input--disabled": !editable || saving,
 											})}
-											disabled={!editable || loading}
+											disabled={!editable || saving}
 										/>
 										<button
 											type="button"
 											className={classNames("workshift__input-clear", {
 												"workshift__input-clear--disabled":
-													!item.time || !editable || loading,
+													!item.time || !editable || saving,
 											})}
 											onClick={() => {
 												const updatedDay = {
@@ -562,7 +585,7 @@ const DayRow = ({
 
 												onBlurSave(updatedDay);
 											}}
-											disabled={!item.time || !editable || loading}
+											disabled={!item.time || !editable || saving}
 										>
 											×
 										</button>
@@ -574,8 +597,11 @@ const DayRow = ({
 				</div>
 				<button
 					style={{ marginTop: "5px" }}
-					className="workshift__btn"
+					className={classNames("workshift__btn", {
+						"workshift__btn--disabled": !editable || saving,
+					})}
 					onClick={() => onAddWorkDone(day.shiftDate)}
+					disabled={!editable || saving}
 				>
 					Add separate cient row
 				</button>
@@ -584,16 +610,40 @@ const DayRow = ({
 	</div>
 );
 
+const formatTime = (time?: string | null) => {
+	if (!time) return "";
+
+	const [hours, minutes] = time.split(":");
+
+	return `${hours}:${minutes}`;
+};
+
+// TODO:
+const isValidTime = (time?: string) => {
+	return /^([01]\d|2[0-3]):[0-5]\d$/.test(time || "");
+};
+
+type VisitProps = {
+	userId: string | undefined;
+	currentUser: {
+		id: string;
+	} | null;
+	shiftDate: string;
+	// setShiftDate: React.Dispatch<React.SetStateAction<boolean>>;
+	isWeek: boolean;
+	isMonth: boolean;
+	onError: (error: Error | null) => void;
+};
+
 const Visit = ({
 	userId,
 	currentUser,
 	shiftDate,
-	// setShiftDate,
 	isWeek,
 	isMonth,
+	onError,
 }: VisitProps) => {
-	const [loading, setLoading] = useState(false);
-	const [error, setError] = useState(null);
+	const queryClient = useQueryClient();
 	const [data, setData] = useState({
 		startTime: "",
 		endTime: "",
@@ -603,263 +653,464 @@ const Visit = ({
 	});
 
 	const [weekShifts, setWeekShifts] = useState<WeekShift[]>([]);
-	const [weekLoading, setWeekLoading] = useState(false);
 	const [monthShifts, setMonthShifts] = useState<WeekShift[]>([]);
-	const [monthLoading, setMonthLoading] = useState(false);
-	const [clients, setClients] = useState<Client[]>([]);
+	const [total, setTotal] = useState("00:00");
+	const editable = currentUser?.id === userId;
+	const [savingDate, setSavingDate] = useState<string | null>(null);
+	const [savingMonthDate, setSavingMonthDate] = useState<string | null>(null);
 
-	// TODO:
-	useEffect(() => {
-		const fetchClients = async () => {
+	// TODO: LEARN THIS (FETCH CLIENTS)
+	const {
+		data: clients = [],
+		isLoading: clientsLoading,
+		error: fetchClientsError,
+	} = useQuery({
+		queryKey: ["user-page", userId, "clients"],
+		queryFn: async () => {
 			const { data, error } = await supabase
 				.from("clients")
 				.select("id, name, tel, address")
 				.order("name");
 
-			if (error) {
-				console.error(error);
+			if (error) throw error;
+
+			return data ?? [];
+		},
+	});
+
+	// TODO: LEARN THIS (fetch day shift)
+	const {
+		data: shift,
+		isSuccess,
+		error: fetchDayShiftError,
+	} = useQuery({
+		queryKey: ["user-page", userId, "shift", shiftDate],
+
+		queryFn: async () => {
+			const { data, error } = await supabase
+				.from("shifts")
+				.select("start_time, end_time, pause_time, over_time, work_done")
+				.eq("user_id", userId)
+				.eq("shift_date", shiftDate)
+				.maybeSingle();
+
+			if (error) throw error;
+
+			return data;
+		},
+
+		enabled: !!userId && !!shiftDate,
+	});
+
+	useEffect(() => {
+		if (!isSuccess) return;
+
+		setTotal("00:00");
+
+		if (shift) {
+			setData({
+				startTime: formatTime(shift.start_time),
+				endTime: formatTime(shift.end_time),
+				overTime: formatTime(shift.over_time),
+				pauseTime: formatTime(shift.pause_time),
+
+				workDone:
+					shift.work_done && shift.work_done.length > 0
+						? shift.work_done
+						: [
+								{
+									id: crypto.randomUUID(),
+									clientId: "",
+									clientName: "",
+									task: "",
+									time: "",
+								},
+							],
+			});
+		} else {
+			setData({
+				startTime: "",
+				endTime: "",
+				overTime: "",
+				pauseTime: "",
+
+				workDone: [
+					{
+						id: crypto.randomUUID(),
+						clientId: "",
+						clientName: "",
+						task: "",
+						time: "",
+					},
+				],
+			});
+		}
+	}, [shift, isSuccess]);
+
+	const weekDates = getWeekDates(shiftDate);
+	const weekFrom = weekDates[0];
+	const weekTo = weekDates[6];
+
+	// TODO: LEARN THIS (fetch week shift)
+	const {
+		data: fetchedWeekShifts = [],
+		isLoading: weekLoading,
+		isSuccess: weekSuccess,
+		error: fetchWeekShiftError,
+	} = useQuery({
+		queryKey: ["user-page", userId, "week-shifts", weekFrom, weekTo],
+
+		queryFn: async () => {
+			const { data, error } = await supabase
+				.from("shifts")
+				.select(
+					"shift_date, start_time, end_time, pause_time, over_time, work_done",
+				)
+				.eq("user_id", userId)
+				.gte("shift_date", weekFrom)
+				.lte("shift_date", weekTo);
+
+			if (error) throw error;
+
+			return data ?? [];
+		},
+
+		enabled: isWeek && !!userId,
+	});
+
+	useEffect(() => {
+		if (!weekSuccess) return;
+
+		const merged = weekDates.map((date) => {
+			const existing = fetchedWeekShifts.find(
+				(shift) => shift.shift_date === date,
+			);
+
+			if (existing) {
+				return {
+					shiftDate: existing.shift_date,
+					startTime: formatTime(existing.start_time),
+					endTime: formatTime(existing.end_time),
+					pauseTime: formatTime(existing.pause_time),
+					overTime: formatTime(existing.over_time),
+
+					workDone:
+						existing.work_done && existing.work_done.length > 0
+							? existing.work_done
+							: [
+									{
+										id: crypto.randomUUID(),
+										clientId: "",
+										clientName: "",
+										task: "",
+										time: "",
+									},
+								],
+				};
+			}
+
+			return {
+				shiftDate: date,
+				startTime: "",
+				endTime: "",
+				pauseTime: "",
+				overTime: "",
+
+				workDone: [
+					{
+						id: crypto.randomUUID(),
+						clientId: "",
+						clientName: "",
+						task: "",
+						time: "",
+					},
+				],
+			};
+		});
+
+		setWeekShifts(merged);
+	}, [weekSuccess, fetchedWeekShifts, weekFrom, weekTo]);
+
+	const monthDates = getMonthDates(shiftDate);
+	const from = monthDates[0];
+	const to = monthDates[monthDates.length - 1];
+
+	// TODO: LEARN THIS (fetch month shift)
+	const {
+		data: fetchedMonthShifts,
+		isLoading: monthLoading,
+		isSuccess: monthSuccess,
+		error: fetchMonthShiftError,
+	} = useQuery({
+		queryKey: ["user-page", userId, "month-shifts", from, to],
+
+		queryFn: async () => {
+			const { data, error } = await supabase
+				.from("shifts")
+				.select(
+					"shift_date, start_time, end_time, pause_time, over_time, work_done",
+				)
+				.eq("user_id", userId)
+				.gte("shift_date", from)
+				.lte("shift_date", to);
+
+			if (error) throw error;
+
+			return data ?? [];
+		},
+
+		enabled: isMonth && !!userId,
+	});
+
+	useEffect(() => {
+		if (!monthSuccess) return;
+
+		const merged = monthDates.map((date) => {
+			const existing = fetchedMonthShifts.find(
+				(shift) => shift.shift_date === date,
+			);
+
+			if (existing) {
+				return {
+					shiftDate: existing.shift_date,
+					startTime: formatTime(existing.start_time),
+					endTime: formatTime(existing.end_time),
+					pauseTime: formatTime(existing.pause_time),
+					overTime: formatTime(existing.over_time),
+
+					workDone:
+						existing.work_done && existing.work_done.length > 0
+							? existing.work_done
+							: [
+									{
+										id: crypto.randomUUID(),
+										task: "",
+										time: "",
+									},
+								],
+				};
+			}
+
+			return {
+				shiftDate: date,
+				startTime: "",
+				endTime: "",
+				pauseTime: "",
+				overTime: "",
+
+				workDone: [
+					{
+						id: crypto.randomUUID(),
+						task: "",
+						time: "",
+					},
+				],
+			};
+		});
+
+		setMonthShifts(merged);
+	}, [monthSuccess, fetchedMonthShifts, from, to]);
+
+	// TODO: LEARN THIS (saveWorkshift)
+	const {
+		mutateAsync: saveWorkShift,
+		isPending: savingWorkShift,
+		error: saveDayShiftError,
+	} = useMutation({
+		mutationKey: ["user-page", userId, "save-shift"],
+
+		mutationFn: async (overrides: Partial<typeof data> = {}) => {
+			const updatedData = {
+				...data,
+				...overrides,
+			};
+
+			const hasTime =
+				!!updatedData.startTime ||
+				!!updatedData.endTime ||
+				!!updatedData.pauseTime ||
+				!!updatedData.overTime;
+
+			const workDoneToSave = updatedData.workDone.filter(
+				(item) =>
+					item.task?.trim() ||
+					item.time?.trim() ||
+					item.clientId?.trim() ||
+					item.clientName?.trim(),
+			);
+
+			const hasWorkDone = workDoneToSave.length > 0;
+
+			if (!hasTime && !hasWorkDone) {
+				const { error } = await supabase
+					.from("shifts")
+					.delete()
+					.eq("user_id", userId)
+					.eq("shift_date", shiftDate);
+
+				if (error) throw error;
+
 				return;
 			}
 
-			setClients(data ?? []);
-		};
+			const { error } = await supabase.from("shifts").upsert(
+				{
+					user_id: userId,
+					shift_date: shiftDate,
+					start_time: updatedData.startTime || null,
+					end_time: updatedData.endTime || null,
+					pause_time: updatedData.pauseTime || null,
+					over_time: updatedData.overTime || null,
+					work_done: workDoneToSave,
+				},
+				{
+					onConflict: "user_id,shift_date",
+				},
+			);
 
-		fetchClients();
-	}, []);
+			if (error) throw error;
+		},
 
-	const [total, setTotal] = useState("00:00");
-	// const [monthInput, setMonthInput] = useState(shiftDate.slice(0, 7));
-	// const [month, setMonth] = useState("00:00");
-	const editable = currentUser?.id === userId;
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: ["user-page", userId, "shift", shiftDate],
+			});
+		},
+	});
 
-	const formatTime = (time?: string | null) => {
-		if (!time) return "";
+	// TODO: LEARN THIS (saveWeekDayWorkshift)
+	const { mutateAsync: saveWeekDayWorkShift, error: saveWeekShiftError } =
+		useMutation({
+			mutationKey: ["user-page", userId, "save-week-shift"],
 
-		const [hours, minutes] = time.split(":");
+			mutationFn: async (day: WeekShift) => {
+				const hasTime =
+					!!day.startTime || !!day.endTime || !!day.pauseTime || !!day.overTime;
 
-		return `${hours}:${minutes}`;
-	};
+				const workDoneToSave = day.workDone.filter(
+					(item) =>
+						item.task?.trim() ||
+						item.time?.trim() ||
+						item.clientId?.trim() ||
+						item.clientName?.trim(),
+				);
 
-	useEffect(() => {
-		if (!isWeek || !userId) return;
+				const hasWorkDone = workDoneToSave.length > 0;
 
-		const weekDates = getWeekDates(shiftDate);
-		const from = weekDates[0];
-		const to = weekDates[6];
+				if (!hasTime && !hasWorkDone) {
+					const { error } = await supabase
+						.from("shifts")
+						.delete()
+						.eq("user_id", userId)
+						.eq("shift_date", day.shiftDate);
 
-		const fetchWeekShifts = async () => {
-			setWeekLoading(true);
-			setError(null);
+					if (error) throw error;
 
-			try {
-				const { data: shifts, error } = await supabase
-					.from("shifts")
-					.select(
-						"shift_date, start_time, end_time, pause_time, over_time, work_done",
-					)
-					.eq("user_id", userId)
-					.gte("shift_date", from)
-					.lte("shift_date", to);
-
-				if (error) throw error;
-
-				// fill in missing days so every day in the week renders a row
-				const merged = weekDates.map((date) => {
-					const existing = shifts?.find((s) => s.shift_date === date);
-					if (existing) {
-						return {
-							shiftDate: existing.shift_date,
-							startTime: formatTime(existing.start_time),
-							endTime: formatTime(existing.end_time),
-							pauseTime: formatTime(existing.pause_time),
-							overTime: formatTime(existing.over_time),
-							workDone:
-								existing.work_done && existing.work_done.length > 0
-									? existing.work_done
-									: [
-											{
-												id: crypto.randomUUID(),
-												clientId: "",
-												clientName: "",
-												task: "",
-												time: "",
-											},
-										],
-						};
-					}
-					return {
-						shiftDate: date,
-						startTime: "",
-						endTime: "",
-						pauseTime: "",
-						overTime: "",
-						workDone: [
-							{
-								id: crypto.randomUUID(),
-								cllientId: "",
-								clientName: "",
-								task: "",
-								time: "",
-							},
-						],
-					};
-				});
-
-				setWeekShifts(merged);
-			} catch (err: any) {
-				setError(err.message);
-			} finally {
-				setWeekLoading(false);
-			}
-		};
-
-		fetchWeekShifts();
-	}, [isWeek, shiftDate, userId]);
-
-	useEffect(() => {
-		if (!isMonth || !userId) return;
-
-		const monthDates = getMonthDates(shiftDate);
-		const from = monthDates[0];
-		const to = monthDates[monthDates.length - 1];
-
-		const fetchMonthShifts = async () => {
-			setMonthLoading(true);
-			setError(null);
-
-			try {
-				const { data: shifts, error } = await supabase
-					.from("shifts")
-					.select(
-						"shift_date, start_time, end_time, pause_time, over_time, work_done",
-					)
-					.eq("user_id", userId)
-					.gte("shift_date", from)
-					.lte("shift_date", to);
-
-				if (error) throw error;
-
-				const merged = monthDates.map((date) => {
-					const existing = shifts?.find((s) => s.shift_date === date);
-					if (existing) {
-						return {
-							shiftDate: existing.shift_date,
-							startTime: formatTime(existing.start_time),
-							endTime: formatTime(existing.end_time),
-							pauseTime: formatTime(existing.pause_time),
-							overTime: formatTime(existing.over_time),
-							workDone:
-								existing.work_done && existing.work_done.length > 0
-									? existing.work_done
-									: [{ id: crypto.randomUUID(), task: "", time: "" }],
-						};
-					}
-					return {
-						shiftDate: date,
-						startTime: "",
-						endTime: "",
-						pauseTime: "",
-						overTime: "",
-						workDone: [{ id: crypto.randomUUID(), task: "", time: "" }],
-					};
-				});
-
-				setMonthShifts(merged);
-			} catch (err: any) {
-				setError(err.message);
-			} finally {
-				setMonthLoading(false);
-			}
-		};
-
-		fetchMonthShifts();
-	}, [isMonth, shiftDate, userId]);
-
-	useEffect(() => {
-		const fetchWorkShift = async () => {
-			setError(null);
-			setLoading(true);
-			setTotal("00:00");
-
-			try {
-				const { data: shift, error } = await supabase
-					.from("shifts")
-					.select("start_time, end_time, pause_time, over_time, work_done")
-					.eq("user_id", userId)
-					.eq("shift_date", shiftDate)
-					.maybeSingle();
-
-				if (error) throw error;
-
-				if (shift) {
-					setData({
-						startTime: formatTime(shift.start_time),
-						endTime: formatTime(shift.end_time),
-						overTime: formatTime(shift.over_time),
-						pauseTime: formatTime(shift.pause_time),
-						workDone:
-							shift.work_done && shift.work_done.length > 0
-								? shift.work_done
-								: [{ id: crypto.randomUUID(), task: "", time: "" }],
-					});
-				} else {
-					// no row yet for this date — reset to empty
-					setData({
-						startTime: "",
-						endTime: "",
-						overTime: "",
-						pauseTime: "",
-						workDone: [
-							{
-								id: crypto.randomUUID(),
-								clientId: "",
-								clientName: "",
-								task: "",
-								time: "",
-							},
-						],
-					});
+					return;
 				}
-			} catch (err: any) {
-				setError(err.message);
-			} finally {
-				setLoading(false);
-			}
-		};
 
-		if (userId && shiftDate) {
-			fetchWorkShift();
+				const { error } = await supabase.from("shifts").upsert(
+					{
+						user_id: userId,
+						shift_date: day.shiftDate,
+						start_time: day.startTime || null,
+						end_time: day.endTime || null,
+						pause_time: day.pauseTime || null,
+						over_time: day.overTime || null,
+						work_done: workDoneToSave,
+					},
+					{
+						onConflict: "user_id,shift_date",
+					},
+				);
+
+				if (error) throw error;
+			},
+
+			onSuccess: () => {
+				queryClient.invalidateQueries({
+					queryKey: ["user-page", userId, "week-shifts"],
+				});
+			},
+		});
+
+	const saveWeekDateWorkShift = async (day: WeekShift) => {
+		setSavingDate(day.shiftDate);
+
+		try {
+			await saveWeekDayWorkShift(day);
+		} finally {
+			setSavingDate(null);
 		}
-	}, [userId, shiftDate]);
-
-	// TODO:
-	const isValidTime = (time?: string) => {
-		return /^([01]\d|2[0-3]):[0-5]\d$/.test(time || "");
 	};
 
-	useEffect(() => {
-		if (!isValidTime(data.startTime) || !isValidTime(data.endTime)) {
-			setTotal("00:00");
-			return;
+	// TODO: LEARN THIS (saveMonthDayWorkshift)
+	const { mutateAsync: saveMonthDayWorkShift, error: saveMonthShiftError } =
+		useMutation({
+			mutationKey: ["user-page", userId, "save-month-shift"],
+
+			mutationFn: async (day: WeekShift) => {
+				const hasTime =
+					!!day.startTime || !!day.endTime || !!day.pauseTime || !!day.overTime;
+
+				const workDoneToSave = day.workDone.filter(
+					(item) =>
+						item.task?.trim() ||
+						item.time?.trim() ||
+						item.clientId?.trim() ||
+						item.clientName?.trim(),
+				);
+
+				const hasWorkDone = workDoneToSave.length > 0;
+
+				if (!hasTime && !hasWorkDone) {
+					const { error } = await supabase
+						.from("shifts")
+						.delete()
+						.eq("user_id", userId)
+						.eq("shift_date", day.shiftDate);
+
+					if (error) throw error;
+
+					return;
+				}
+
+				const { error } = await supabase.from("shifts").upsert(
+					{
+						user_id: userId,
+						shift_date: day.shiftDate,
+						start_time: day.startTime || null,
+						end_time: day.endTime || null,
+						pause_time: day.pauseTime || null,
+						over_time: day.overTime || null,
+						work_done: workDoneToSave,
+					},
+					{
+						onConflict: "user_id,shift_date",
+					},
+				);
+
+				if (error) throw error;
+			},
+
+			onSuccess: () => {
+				queryClient.invalidateQueries({
+					queryKey: ["user-page", userId, "month-shifts"],
+				});
+			},
+		});
+
+	const saveMonthDateWorkShift = async (day: WeekShift) => {
+		setSavingMonthDate(day.shiftDate);
+
+		try {
+			await saveMonthDayWorkShift(day);
+		} finally {
+			setSavingMonthDate(null);
 		}
+	};
 
-		const start = timeToMinutes(data.startTime);
-		const end = timeToMinutes(data.endTime);
-
-		const over = isValidTime(data.overTime) ? timeToMinutes(data.overTime) : 0;
-
-		const pause = isValidTime(data.pauseTime)
-			? timeToMinutes(data.pauseTime)
-			: 0;
-
-		const totalMinutes = end - start + over - pause;
-
-		const hours = Math.floor(totalMinutes / 60);
-		const minutes = totalMinutes % 60;
-
-		setTotal(`${hours}:${minutes.toString().padStart(2, "0")}`);
-	}, [data, shiftDate]);
-
+	// Handle day input on change
 	const handleDataInput = (name: string, value: any) => {
 		setData((prev) => ({
 			...prev,
@@ -867,46 +1118,7 @@ const Visit = ({
 		}));
 	};
 
-	const addWorkDoneEntry = () => {
-		setData((prev) => ({
-			...prev,
-			workDone: [
-				...prev.workDone,
-				{
-					id: crypto.randomUUID(),
-					clientId: "",
-					clientName: "",
-					task: "",
-					time: "",
-				},
-			],
-		}));
-	};
-
-	const handleChangeInput = (id: string, name: string, value: string) => {
-		setData((prev) => ({
-			...prev,
-			workDone: prev.workDone.map((item) =>
-				item.id === id ? { ...item, [name]: value } : item,
-			),
-		}));
-	};
-
-	const getWeekDates = (dateStr: string) => {
-		const date = new Date(dateStr);
-		const day = date.getDay(); // 0 = Sunday, 1 = Monday, ...
-		const diffToMonday = day === 0 ? -6 : 1 - day;
-
-		const monday = new Date(date);
-		monday.setDate(date.getDate() + diffToMonday);
-
-		return Array.from({ length: 7 }, (_, i) => {
-			const d = new Date(monday);
-			d.setDate(monday.getDate() + i);
-			return toLocalDateString(d);
-		});
-	};
-
+	// Handle week day input on change
 	const handleWeekDataInput = (
 		shiftDate: string,
 		name: string,
@@ -919,6 +1131,30 @@ const Visit = ({
 		);
 	};
 
+	// Handle month day input on change
+	const handleMonthDataInput = (
+		shiftDate: string,
+		name: string,
+		value: string,
+	) => {
+		setMonthShifts((prev) =>
+			prev.map((day) =>
+				day.shiftDate === shiftDate ? { ...day, [name]: value } : day,
+			),
+		);
+	};
+
+	// Handle day work done on change
+	const handleChangeInput = (id: string, name: string, value: string) => {
+		setData((prev) => ({
+			...prev,
+			workDone: prev.workDone.map((item) =>
+				item.id === id ? { ...item, [name]: value } : item,
+			),
+		}));
+	};
+
+	// Handle week day work done on change
 	const handleWeekWorkDoneChange = (
 		shiftDate: string,
 		id: string,
@@ -939,6 +1175,45 @@ const Visit = ({
 		);
 	};
 
+	// Handle month day work done on change
+	const handleMonthWorkDoneChange = (
+		shiftDate: string,
+		id: string,
+		name: string,
+		value: string,
+	) => {
+		setMonthShifts((prev) =>
+			prev.map((day) =>
+				day.shiftDate === shiftDate
+					? {
+							...day,
+							workDone: day.workDone.map((item) =>
+								item.id === id ? { ...item, [name]: value } : item,
+							),
+						}
+					: day,
+			),
+		);
+	};
+
+	// Add day work done row
+	const addWorkDoneEntry = () => {
+		setData((prev) => ({
+			...prev,
+			workDone: [
+				...prev.workDone,
+				{
+					id: crypto.randomUUID(),
+					clientId: "",
+					clientName: "",
+					task: "",
+					time: "",
+				},
+			],
+		}));
+	};
+
+	// Add week day work done row
 	const addWeekWorkDoneEntry = (shiftDate: string) => {
 		setWeekShifts((prev) =>
 			prev.map((day) =>
@@ -961,205 +1236,7 @@ const Visit = ({
 		);
 	};
 
-	const upsertWorkShift = async (overrides: Partial<typeof data> = {}) => {
-		setLoading(true);
-		setError(null);
-
-		try {
-			const updatedData = {
-				...data,
-				...overrides,
-			};
-
-			const hasTime =
-				!!updatedData.startTime ||
-				!!updatedData.endTime ||
-				!!updatedData.pauseTime ||
-				!!updatedData.overTime;
-
-			// Remove completely empty workDone rows
-			const workDoneToSave = updatedData.workDone.filter(
-				(item) =>
-					item.task?.trim() ||
-					item.time?.trim() ||
-					item.clientId?.trim() ||
-					item.clientName?.trim(),
-			);
-
-			// Nothing to save at all
-			if (!hasTime) {
-				const { error } = await supabase
-					.from("shifts")
-					.delete()
-					.eq("user_id", userId)
-					.eq("shift_date", shiftDate);
-
-				if (error) throw error;
-
-				return;
-			}
-
-			const { error } = await supabase.from("shifts").upsert(
-				{
-					user_id: userId,
-					shift_date: shiftDate,
-					start_time: updatedData.startTime || null,
-					end_time: updatedData.endTime || null,
-					pause_time: updatedData.pauseTime || null,
-					over_time: updatedData.overTime || null,
-					work_done: workDoneToSave,
-				},
-				{ onConflict: "user_id,shift_date" },
-			);
-
-			if (error) throw error;
-		} catch (error: any) {
-			setError(error.message);
-		} finally {
-			setLoading(false);
-		}
-	};
-
-	const upsertWeekWorkShift = async (day: WeekShift) => {
-		setLoading(true);
-		setError(null);
-		try {
-			const hasTime =
-				!!day.startTime || !!day.endTime || !!day.pauseTime || !!day.overTime;
-
-			const workDoneToSave = day.workDone.filter(
-				(item) =>
-					item.task?.trim() ||
-					item.time?.trim() ||
-					item.clientId?.trim() ||
-					item.clientName?.trim(),
-			);
-
-			if (!hasTime) {
-				const { error } = await supabase
-					.from("shifts")
-					.delete()
-					.eq("user_id", userId)
-					.eq("shift_date", day.shiftDate);
-
-				if (error) throw error;
-
-				return;
-			}
-
-			const { error } = await supabase.from("shifts").upsert(
-				{
-					user_id: userId,
-					shift_date: day.shiftDate,
-					start_time: day.startTime || null,
-					end_time: day.endTime || null,
-					pause_time: day.pauseTime || null,
-					over_time: day.overTime || null,
-					work_done: workDoneToSave,
-				},
-				{ onConflict: "user_id,shift_date" },
-			);
-
-			if (error) throw error;
-		} catch (err: any) {
-			setError(err.message);
-		} finally {
-			setLoading(false);
-		}
-	};
-
-	const upsertMonthWorkShift = async (day: WeekShift) => {
-		setLoading(true);
-		setError(null);
-		try {
-			const hasTime =
-				!!day.startTime || !!day.endTime || !!day.pauseTime || !!day.overTime;
-
-			const workDoneToSave = day.workDone.filter(
-				(item) =>
-					item.task?.trim() ||
-					item.time?.trim() ||
-					item.clientId?.trim() ||
-					item.clientName?.trim(),
-			);
-
-			if (!hasTime) {
-				const { error } = await supabase
-					.from("shifts")
-					.delete()
-					.eq("user_id", userId)
-					.eq("shift_date", day.shiftDate);
-
-				if (error) throw error;
-
-				return;
-			}
-
-			const { error } = await supabase.from("shifts").upsert(
-				{
-					user_id: userId,
-					shift_date: day.shiftDate,
-					start_time: day.startTime || null,
-					end_time: day.endTime || null,
-					pause_time: day.pauseTime || null,
-					over_time: day.overTime || null,
-					work_done: workDoneToSave,
-				},
-				{ onConflict: "user_id,shift_date" },
-			);
-
-			if (error) throw error;
-		} catch (err: any) {
-			setError(err.message);
-		} finally {
-			setLoading(false);
-		}
-	};
-
-	// Month
-
-	const getMonthDates = (dateStr: string) => {
-		const [year, month] = dateStr.split("-").map(Number);
-		const daysInMonth = new Date(year, month, 0).getDate();
-
-		return Array.from({ length: daysInMonth }, (_, i) => {
-			const d = new Date(year, month - 1, i + 1);
-			return toLocalDateString(d);
-		});
-	};
-
-	const handleMonthDataInput = (
-		shiftDate: string,
-		name: string,
-		value: string,
-	) => {
-		setMonthShifts((prev) =>
-			prev.map((day) =>
-				day.shiftDate === shiftDate ? { ...day, [name]: value } : day,
-			),
-		);
-	};
-
-	const handleMonthWorkDoneChange = (
-		shiftDate: string,
-		id: string,
-		name: string,
-		value: string,
-	) => {
-		setMonthShifts((prev) =>
-			prev.map((day) =>
-				day.shiftDate === shiftDate
-					? {
-							...day,
-							workDone: day.workDone.map((item) =>
-								item.id === id ? { ...item, [name]: value } : item,
-							),
-						}
-					: day,
-			),
-		);
-	};
-
+	// Add month day work done row
 	const addMonthWorkDoneEntry = (shiftDate: string) => {
 		setMonthShifts((prev) =>
 			prev.map((day) =>
@@ -1182,8 +1259,44 @@ const Visit = ({
 		);
 	};
 
-	if (!currentUser) return <p>Loading...</p>; // wait for context to hydrate
-	// const editable = currentUser.id === userId;
+	useEffect(() => {
+		if (!isValidTime(data.startTime) || !isValidTime(data.endTime)) {
+			setTotal("00:00");
+			return;
+		}
+
+		const start = timeToMinutes(data.startTime);
+		const end = timeToMinutes(data.endTime);
+		const over = isValidTime(data.overTime) ? timeToMinutes(data.overTime) : 0;
+		const pause = isValidTime(data.pauseTime)
+			? timeToMinutes(data.pauseTime)
+			: 0;
+
+		const totalMinutes = end - start + over - pause;
+
+		const hours = Math.floor(totalMinutes / 60);
+		const minutes = totalMinutes % 60;
+
+		setTotal(
+			`${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`,
+		);
+	}, [data, shiftDate]);
+
+	const error =
+		fetchClientsError ||
+		fetchDayShiftError ||
+		fetchWeekShiftError ||
+		fetchMonthShiftError ||
+		saveDayShiftError ||
+		saveWeekShiftError ||
+		saveMonthShiftError ||
+		null;
+
+	useEffect(() => {
+		onError(error);
+	}, [error, onError]);
+
+	if (!currentUser) return <p>Loading...</p>;
 
 	if (isWeek) {
 		return (
@@ -1197,15 +1310,14 @@ const Visit = ({
 						key={day.shiftDate}
 						day={day}
 						editable={editable}
-						loading={loading}
 						onDataInput={handleWeekDataInput}
 						onWorkDoneChange={handleWeekWorkDoneChange}
 						onAddWorkDone={addWeekWorkDoneEntry}
-						onBlurSave={upsertWeekWorkShift}
+						onBlurSave={saveWeekDateWorkShift}
 						clients={clients}
+						saving={savingDate === day.shiftDate || weekLoading}
 					/>
 				))}
-				<StatusIndicator loading={weekLoading} error={error} />
 			</section>
 		);
 	}
@@ -1222,15 +1334,14 @@ const Visit = ({
 						key={day.shiftDate}
 						day={day}
 						editable={editable}
-						loading={loading}
 						onDataInput={handleMonthDataInput}
 						onWorkDoneChange={handleMonthWorkDoneChange}
 						onAddWorkDone={addMonthWorkDoneEntry}
-						onBlurSave={upsertMonthWorkShift}
+						onBlurSave={saveMonthDateWorkShift}
 						clients={clients}
+						saving={savingMonthDate === day.shiftDate || monthLoading}
 					/>
 				))}
-				<StatusIndicator loading={monthLoading} error={error} />
 			</section>
 		);
 	}
@@ -1277,7 +1388,7 @@ const Visit = ({
 									if (/^\d:[0-5]\d$/.test(value)) {
 										value = `0${value}`;
 										handleDataInput("startTime", value);
-										upsertWorkShift({ startTime: value });
+										saveWorkShift({ startTime: value });
 										return;
 									}
 
@@ -1285,30 +1396,30 @@ const Visit = ({
 
 									if (!validTime && value !== "") {
 										handleDataInput("startTime", "");
-										upsertWorkShift({ startTime: "" });
+										saveWorkShift({ startTime: "" });
 										return;
 									}
 
-									upsertWorkShift();
+									saveWorkShift({});
 								}}
 								className={classNames("workshift__input", {
-									"workshift__input--disabled": !editable || loading,
+									"workshift__input--disabled": !editable || savingWorkShift,
 								})}
-								disabled={!editable || loading}
+								disabled={!editable || savingWorkShift}
 							/>
 
 							<button
 								type="button"
 								className={classNames("workshift__input-clear", {
 									"workshift__input-clear--disabled":
-										!data.startTime || !editable || loading,
+										!data.startTime || !editable || savingWorkShift,
 								})}
 								onClick={() => {
 									handleDataInput("startTime", "");
-									upsertWorkShift({ startTime: "" });
+									saveWorkShift({ startTime: "" });
 								}}
 								aria-label="Clear start time"
-								disabled={!data.startTime || !editable || loading}
+								disabled={!data.startTime || !editable || savingWorkShift}
 							>
 								×
 							</button>
@@ -1348,7 +1459,7 @@ const Visit = ({
 									if (/^\d:[0-5]\d$/.test(value)) {
 										value = `0${value}`;
 										handleDataInput("endTime", value);
-										upsertWorkShift({ endTime: value });
+										saveWorkShift({ endTime: value });
 										return;
 									}
 
@@ -1356,30 +1467,30 @@ const Visit = ({
 
 									if (!validTime && value !== "") {
 										handleDataInput("endTime", "");
-										upsertWorkShift({ endTime: "" });
+										saveWorkShift({ endTime: "" });
 										return;
 									}
 
-									upsertWorkShift();
+									saveWorkShift({});
 								}}
 								className={classNames("workshift__input", {
-									"workshift__input--disabled": !editable || loading,
+									"workshift__input--disabled": !editable || savingWorkShift,
 								})}
-								disabled={!editable || loading}
+								disabled={!editable || savingWorkShift}
 							/>
 
 							<button
 								type="button"
 								className={classNames("workshift__input-clear", {
 									"workshift__input-clear--disabled":
-										!data.endTime || !editable || loading,
+										!data.endTime || !editable || savingWorkShift,
 								})}
 								onClick={() => {
 									handleDataInput("endTime", "");
-									upsertWorkShift({ endTime: "" });
+									saveWorkShift({ endTime: "" });
 								}}
 								aria-label="Clear start time"
-								disabled={!data.endTime || !editable || loading}
+								disabled={!data.endTime || !editable || savingWorkShift}
 							>
 								×
 							</button>
@@ -1419,7 +1530,7 @@ const Visit = ({
 									if (/^\d:[0-5]\d$/.test(value)) {
 										value = `0${value}`;
 										handleDataInput("pauseTime", value);
-										upsertWorkShift({ pauseTime: value });
+										saveWorkShift({ pauseTime: value });
 										return;
 									}
 
@@ -1427,30 +1538,30 @@ const Visit = ({
 
 									if (!validTime && value !== "") {
 										handleDataInput("pauseTime", "");
-										upsertWorkShift({ pauseTime: "" });
+										saveWorkShift({ pauseTime: "" });
 										return;
 									}
 
-									upsertWorkShift();
+									saveWorkShift({});
 								}}
 								className={classNames("workshift__input", {
-									"workshift__input--disabled": !editable || loading,
+									"workshift__input--disabled": !editable || savingWorkShift,
 								})}
-								disabled={!editable || loading}
+								disabled={!editable || savingWorkShift}
 							/>
 
 							<button
 								type="button"
 								className={classNames("workshift__input-clear", {
 									"workshift__input-clear--disabled":
-										!data.pauseTime || !editable || loading,
+										!data.pauseTime || !editable || savingWorkShift,
 								})}
 								onClick={() => {
 									handleDataInput("pauseTime", "");
-									upsertWorkShift({ pauseTime: "" });
+									saveWorkShift({ pauseTime: "" });
 								}}
 								aria-label="Clear start time"
-								disabled={!data.pauseTime || !editable || loading}
+								disabled={!data.pauseTime || !editable || savingWorkShift}
 							>
 								×
 							</button>
@@ -1490,7 +1601,7 @@ const Visit = ({
 									if (/^\d:[0-5]\d$/.test(value)) {
 										value = `0${value}`;
 										handleDataInput("overTime", value);
-										upsertWorkShift({ overTime: value });
+										saveWorkShift({ overTime: value });
 										return;
 									}
 
@@ -1498,29 +1609,29 @@ const Visit = ({
 
 									if (!validTime && value !== "") {
 										handleDataInput("overTime", "");
-										upsertWorkShift({ overTime: "" });
+										saveWorkShift({ overTime: "" });
 										return;
 									}
 
-									upsertWorkShift();
+									saveWorkShift({});
 								}}
 								className={classNames("workshift__input", {
-									"workshift__input--disabled": !editable || loading,
+									"workshift__input--disabled": !editable || savingWorkShift,
 								})}
-								disabled={!editable || loading}
+								disabled={!editable || savingWorkShift}
 							/>
 							<button
 								type="button"
 								className={classNames("workshift__input-clear", {
 									"workshift__input-clear--disabled":
-										!data.overTime || !editable || loading,
+										!data.overTime || !editable || savingWorkShift,
 								})}
 								onClick={() => {
 									handleDataInput("overTime", "");
-									upsertWorkShift({ overTime: "" });
+									saveWorkShift({ overTime: "" });
 								}}
 								aria-label="Clear start time"
-								disabled={!data.overTime || !editable || loading}
+								disabled={!data.overTime || !editable || savingWorkShift}
 							>
 								×
 							</button>
@@ -1549,14 +1660,17 @@ const Visit = ({
 								<div className="workshift__label">Client</div>
 								<select
 									style={{ width: "auto" }}
-									className="workshift__input"
+									className={classNames("workshift__input", {
+										"workshift__input--disabled":
+											!editable || clientsLoading || savingWorkShift,
+									})}
 									name="clientId"
 									value={item.clientId}
 									onChange={(e) =>
 										handleChangeInput(item.id, e.target.name, e.target.value)
 									}
-									onBlur={() => upsertWorkShift()}
-									disabled={!editable || loading}
+									onBlur={() => saveWorkShift({})}
+									disabled={!editable || clientsLoading || savingWorkShift}
 								>
 									<option value="">Select client</option>
 
@@ -1575,8 +1689,8 @@ const Visit = ({
 										handleChangeInput(item.id, e.target.name, e.target.value)
 									}
 									name="task"
-									blur={() => upsertWorkShift()}
-									disable={!editable || loading}
+									blur={() => saveWorkShift({})}
+									disable={!editable || savingWorkShift}
 								/>
 							</div>
 							<div>
@@ -1638,20 +1752,21 @@ const Visit = ({
 												workDone: updatedWorkDone,
 											}));
 
-											upsertWorkShift({
+											saveWorkShift({
 												workDone: updatedWorkDone,
 											});
 										}}
 										className={classNames("workshift__input", {
-											"workshift__input--disabled": !editable || loading,
+											"workshift__input--disabled":
+												!editable || savingWorkShift,
 										})}
-										disabled={!editable || loading}
+										disabled={!editable || savingWorkShift}
 									/>
 									<button
 										type="button"
 										className={classNames("workshift__input-clear", {
 											"workshift__input-clear--disabled":
-												!item.time || !editable || loading,
+												!item.time || !editable || savingWorkShift,
 										})}
 										onClick={() => {
 											const updatedWorkDone = data.workDone.map((work) =>
@@ -1668,11 +1783,11 @@ const Visit = ({
 												workDone: updatedWorkDone,
 											}));
 
-											upsertWorkShift({
+											saveWorkShift({
 												workDone: updatedWorkDone,
 											});
 										}}
-										disabled={!item.time || !editable || loading}
+										disabled={!item.time || !editable || savingWorkShift}
 									>
 										×
 									</button>
@@ -1682,10 +1797,15 @@ const Visit = ({
 					);
 				})}
 			</div>
-			<button className="workshift__btn" onClick={addWorkDoneEntry}>
+			<button
+				className={classNames("workshift__btn", {
+					"workshift__btn--disabled": !editable || savingWorkShift,
+				})}
+				onClick={addWorkDoneEntry}
+				disabled={!editable || savingWorkShift}
+			>
 				Add separate cient row
 			</button>
-			<StatusIndicator loading={loading} error={error} />
 		</section>
 	);
 };

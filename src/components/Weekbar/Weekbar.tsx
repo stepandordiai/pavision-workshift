@@ -1,6 +1,5 @@
 import classNames from "classnames";
 import "./Weekbar.scss";
-// import { useState } from "react";
 
 // TODO: learn this
 const toLocalDateString = (date: Date) => {
@@ -38,13 +37,12 @@ const Weekbar = ({
 	isMonth,
 	setIsMonth,
 }: WeekbarProps) => {
-	// const [loading, setLoading] = useState(false);
-	// const [monthInput, setMonthInput] = useState(shiftDate.slice(0, 7));
-
 	const today = new Date();
 	const dayOfWeek = today.getDay();
-	const diffToMonday = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
-	const monday = new Date(today.setDate(diffToMonday));
+
+	const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+	const monday = new Date(today);
+	monday.setDate(today.getDate() + diffToMonday);
 
 	const schedule = [];
 
@@ -58,10 +56,10 @@ const Weekbar = ({
 		});
 	}
 
-	const handleWeekDay = (date: string, bool: boolean) => {
+	const handleWeekDay = (date: string) => {
 		setShiftDate(date);
-		setIsWeek(bool);
-		setIsMonth(bool);
+		setIsWeek(false);
+		setIsMonth(false);
 	};
 
 	return (
@@ -87,14 +85,6 @@ const Weekbar = ({
 						className={classNames("weekbar__btn", {
 							"weekbar__btn--selected": isMonth,
 						})}
-						style={
-							isMonth
-								? {
-										outline: "2px solid var(--accent-clr)",
-										outlineOffset: "-2px",
-									}
-								: { outline: "none" }
-						}
 					>
 						Month
 					</button>
@@ -109,14 +99,6 @@ const Weekbar = ({
 						className={classNames("weekbar__btn", {
 							"weekbar__btn--selected": isWeek,
 						})}
-						style={
-							isWeek
-								? {
-										outline: "2px solid var(--accent-clr)",
-										outlineOffset: "-2px",
-									}
-								: { outline: "none" }
-						}
 					>
 						Week
 					</button>
@@ -130,21 +112,13 @@ const Weekbar = ({
 							return (
 								<button
 									key={i}
-									onClick={() => handleWeekDay(day.date, false)}
+									onClick={() => handleWeekDay(day.date)}
 									className={classNames("weekbar__btn", {
 										"weekbar__btn--active":
 											day.date === toLocalDateString(new Date()),
 										"weekbar__btn--selected":
 											day.date === shiftDate && !isWeek && !isMonth,
 									})}
-									style={
-										shiftDate === day.date && !isWeek
-											? {
-													outline: "2px solid var(--accent-clr)",
-													outlineOffset: "-2px",
-												}
-											: { outline: "none" }
-									}
 								>
 									{day.day}
 								</button>

@@ -11,5 +11,6 @@
 
 	&--disabled {
 		cursor: not-allowed;
+		outline: 2px solid hsl(37, 100%, 50%);
 	}
 }

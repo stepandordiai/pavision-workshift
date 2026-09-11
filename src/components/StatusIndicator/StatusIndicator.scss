@@ -1,3 +1,11 @@
+.status-bar {
+	position: sticky;
+	bottom: 0;
+	background: #000;
+	padding: 10px;
+	border-radius: 10px;
+}
+
 .status-indicator {
 	display: flex;
 	justify-content: flex-start;
@@ -5,13 +13,11 @@
 	gap: 5px;
 	margin-top: auto;
 	color: #fff;
-	font-family: monospace;
 }
 
 .status-indicator__status {
 	width: 16px;
 	aspect-ratio: 1/1;
-	// border-radius: 50%;
 	border-radius: 5px;
 }
 

@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
-import "./styles.scss";
 import timeToMinutes from "../../utils/timeToMinutes";
 import { NavLink } from "react-router-dom";
+import StatusIndicator from "../../components/StatusIndicator/StatusIndicator";
+import "./styles.scss";
 
 const shiftTotalMinutes = (shift: {
 	start_time: string | null;
@@ -26,80 +27,80 @@ const formatDisplayDate = (dateStr: string) => {
 };
 
 const Home = () => {
-	const [data, setData] = useState<{ id: string; full_name: string }[]>([]);
+	const [loading, setLoading] = useState<boolean>(false);
 	const [error, setError] = useState<string | null>(null);
+	const [data, setData] = useState<{ id: string; full_name: string }[]>([]);
 	const [monthRange, setMonthRange] = useState<{
 		from: string;
 		to: string;
 	} | null>(null);
-
-	useEffect(() => {
-		const fetchMembers = async () => {
-			const { data: members, error } = await supabase
-				.from("members")
-				.select("id, full_name");
-
-			if (error) setError(error.message);
-			setData(members ?? []);
-		};
-
-		fetchMembers();
-	}, []);
-
 	const [memberHours, setMemberHours] = useState<Record<string, string>>({});
 
 	useEffect(() => {
 		const fetchMembersAndHours = async () => {
-			const { data: members, error: membersError } = await supabase
-				.from("members")
-				.select("id, full_name");
+			setLoading(true);
+			setError(null);
 
-			if (membersError) setError(membersError.message);
-			setData(members ?? []);
+			try {
+				const now = new Date();
+				const year = now.getFullYear();
+				const month = now.getMonth(); // 0-indexed
+				const from = `${year}-${String(month + 1).padStart(2, "0")}-01`;
+				const daysInMonth = new Date(year, month + 1, 0).getDate();
+				const to = `${year}-${String(month + 1).padStart(2, "0")}-${String(daysInMonth).padStart(2, "0")}`;
 
-			const now = new Date();
-			const year = now.getFullYear();
-			const month = now.getMonth(); // 0-indexed
-			const from = `${year}-${String(month + 1).padStart(2, "0")}-01`;
-			const daysInMonth = new Date(year, month + 1, 0).getDate();
-			const to = `${year}-${String(month + 1).padStart(2, "0")}-${String(daysInMonth).padStart(2, "0")}`;
+				setMonthRange({ from, to });
 
-			setMonthRange({ from, to });
+				const [
+					{ data: members, error: membersError },
+					{ data: shifts, error: shiftsError },
+				] = await Promise.all([
+					supabase.from("members").select("id, full_name"),
+					supabase
+						.from("shifts")
+						.select("user_id, start_time, end_time, pause_time, over_time")
+						.gte("shift_date", from)
+						.lte("shift_date", to),
+				]);
 
-			const { data: shifts, error: shiftsError } = await supabase
-				.from("shifts")
-				.select("user_id, start_time, end_time, pause_time, over_time")
-				.gte("shift_date", from)
-				.lte("shift_date", to);
+				if (membersError) throw membersError;
+				if (shiftsError) throw shiftsError;
 
-			if (shiftsError) {
-				setError(shiftsError.message);
-				return;
+				setData(members ?? []);
+
+				const totals: Record<string, number> = {};
+				shifts?.forEach((shift) => {
+					const minutes = shiftTotalMinutes(shift);
+					totals[shift.user_id] = (totals[shift.user_id] ?? 0) + minutes;
+				});
+
+				const formatted: Record<string, string> = {};
+				Object.entries(totals).forEach(([userId, minutes]) => {
+					const hours = Math.floor(minutes / 60);
+					const mins = minutes % 60;
+					formatted[userId] = `${hours}:${mins.toString().padStart(2, "0")}`;
+				});
+
+				setMemberHours(formatted);
+			} catch (error) {
+				if (error instanceof Error) {
+					setError(error.message);
+				} else {
+					setError("Something went wrong");
+				}
+			} finally {
+				setLoading(false);
 			}
-
-			const totals: Record<string, number> = {};
-			shifts?.forEach((shift) => {
-				const minutes = shiftTotalMinutes(shift);
-				totals[shift.user_id] = (totals[shift.user_id] ?? 0) + minutes;
-			});
-
-			const formatted: Record<string, string> = {};
-			Object.entries(totals).forEach(([userId, minutes]) => {
-				const hours = Math.floor(minutes / 60);
-				const mins = minutes % 60;
-				formatted[userId] = `${hours}:${mins.toString().padStart(2, "0")}`;
-			});
-
-			setMemberHours(formatted);
 		};
 
 		fetchMembersAndHours();
 	}, []);
 
-	console.log(error);
 	return (
-		<div>
-			<h1 className="main__title">Dashboard</h1>
+		<>
+			<section className="section">
+				<h1 className="main__title">Dashboard</h1>
+			</section>
 			<div>
 				<h2>Members</h2>
 				<div>
@@ -128,7 +129,8 @@ const Home = () => {
 					))}
 				</div>
 			</div>
-		</div>
+			<StatusIndicator loading={loading} error={error} />
+		</>
 	);
 };
 
