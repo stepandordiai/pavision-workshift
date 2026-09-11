@@ -2,12 +2,16 @@
 	outline: 2px solid hsl(0, 0%, 95%);
 	outline-offset: -2px;
 	border-radius: 5px;
-	height: 36px !important;
+	height: 36px;
 	padding: 5px;
 	resize: none;
 	overflow: hidden;
 	width: 100%;
 	display: block;
+
+	&:focus {
+		outline: 2px solid hsl(0, 0%, 0%);
+	}
 
 	&--disabled {
 		cursor: not-allowed;

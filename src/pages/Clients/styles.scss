@@ -19,7 +19,29 @@
 	border-radius: 10px;
 	padding: 1.5rem;
 	display: flex;
-	justify-content: space-between;
+	flex-direction: column;
+}
+
+.clients__delete-modal {
+	position: fixed;
+	z-index: 3;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	width: min(calc(100% - 20px), 500px);
+	background: #fff;
+	border-radius: 10px;
+	padding: 1.5rem;
+	opacity: 0;
+	pointer-events: none;
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
+
+	&--visible {
+		opacity: 1;
+		pointer-events: auto;
+	}
 }
 
 .clients__form {
@@ -28,17 +50,56 @@
 	top: 50%;
 	left: 50%;
 	transform: translate(-50%, -50%);
+	width: min(calc(100% - 20px), 500px);
 	background: #fff;
 	border-radius: 10px;
 	padding: 1.5rem;
 	opacity: 0;
 	pointer-events: none;
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
 
 	&--visible {
 		opacity: 1;
 		pointer-events: auto;
 	}
 }
+
+.clients__form-btn-container {
+	display: flex;
+	gap: 5px;
+	flex-wrap: wrap;
+	align-self: flex-end;
+}
+
+.clients__form-cancel-btn {
+	background: var(--secondary-clr);
+	color: #fff;
+	padding: 5px;
+	border-radius: 5px;
+}
+
+.clients__form-submit-btn {
+	background: var(--primary-clr);
+	padding: 5px;
+	border-radius: 5px;
+	color: #fff;
+}
+
+.clients__input {
+	padding: 5px;
+	border-radius: 5px;
+	width: 100%;
+	min-width: 100px;
+	outline: 2px solid hsl(0, 0%, 95%);
+	outline-offset: -2px;
+
+	&:focus {
+		outline: 2px solid hsl(0, 0%, 0%);
+	}
+}
+
 .curtain {
 	position: fixed;
 	inset: 0;
@@ -50,6 +111,38 @@
 		opacity: 1;
 		pointer-events: auto;
 	}
+}
+
+.clients__label {
+	font-weight: 500;
+}
+
+.clients__details {
+	padding: 5px;
+	border-radius: 5px;
+	outline: 2px solid hsl(0, 0%, 95%);
+	outline-offset: -2px;
+	min-height: 34px;
+}
+
+.clients__btn-container {
+	align-self: flex-end;
+	display: flex;
+	gap: 5px;
+	flex-wrap: wrap;
+}
+
+.clients__edit-btn {
+	background: var(--orange-clr);
+	padding: 5px 10px;
+	border-radius: 5px;
+}
+
+.clients__delete-btn {
+	background: var(--red-clr);
+	padding: 5px 10px;
+	border-radius: 5px;
+	color: #fff;
 }
 
 @media screen and (width < 800px) {

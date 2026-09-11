@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
-import "./AutoGrowTextArea.scss";
 import classNames from "classnames";
+import "./AutoGrowTextArea.scss";
 
 type AutoGrowTextAreaProps = {
 	value: string;
@@ -32,12 +32,6 @@ const AutoGrowTextArea = ({
 		}
 	}, [value]);
 
-	// FIXME:
-	const handleTextArea = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-		e.target.style.height = "auto";
-		e.target.style.height = e.target.scrollHeight + "px";
-	};
-
 	return (
 		<textarea
 			ref={autoGrowTextArea}
@@ -49,7 +43,6 @@ const AutoGrowTextArea = ({
 			value={value}
 			onChange={(e) => {
 				handleChange(e);
-				handleTextArea(e);
 			}}
 			placeholder={holder}
 			onBlur={blur}
