@@ -6,6 +6,12 @@ type StatusIndicatorProps = {
 };
 
 const StatusIndicator = ({ loading, error }: StatusIndicatorProps) => {
+	const getErrorMessage = (error: unknown) => {
+		if (typeof error === "string") return error;
+		if (error instanceof Error) return error.message;
+
+		return "Unknown error";
+	};
 	return (
 		<div className="status-bar">
 			<div className="status-indicator">
@@ -18,7 +24,7 @@ const StatusIndicator = ({ loading, error }: StatusIndicatorProps) => {
 					{loading
 						? "Updating..."
 						: error
-							? `Error: ${error.message}`
+							? `Error: ${getErrorMessage(error)}`
 							: "Updated"}
 				</span>
 			</div>

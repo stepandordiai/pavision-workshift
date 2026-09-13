@@ -10,6 +10,40 @@
 	}
 }
 
+.shifts__section {
+	background: #fff;
+	padding: 10px;
+	border-radius: 10px;
+	display: flex;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: 5px;
+}
+
+.shifts__input {
+	padding: 5px;
+	border-radius: 5px;
+	// width: 100%;
+	// min-width: 100px;
+	outline: 2px solid hsl(0, 0%, 95%);
+	outline-offset: -2px;
+
+	&:focus {
+		outline: 2px solid hsl(0, 0%, 0%);
+	}
+
+	&--disabled {
+		outline: 2px solid hsl(37, 100%, 50%);
+	}
+}
+
+.shifts__export-btn {
+	background: green;
+	color: #fff;
+	padding: 5px;
+	border-radius: 5px;
+}
+
 .visit-container {
 	display: flex;
 	gap: 5px;
