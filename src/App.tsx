@@ -14,8 +14,9 @@ import Header from "./components/layout/Header/Header";
 import Login from "./pages/Login/Login";
 import ResetPassword from "./pages/ResetPassword/ResetPassword";
 import "./styles/App.scss";
-import UserPage from "./pages/UserPage/UserPage";
 import Clients from "./pages/Clients/Clients";
+import Workshifts from "./pages/Workshifts/Workshifts";
+import Profile from "./pages/Profile/Profile";
 
 const queryClient = new QueryClient();
 
@@ -64,8 +65,12 @@ function App() {
 										<main className="main">
 											<Routes>
 												<Route path="/" element={<Home />} />
-												<Route path="/users/:id" element={<UserPage />} />
+												<Route path="/users/:id" element={<Profile />} />
 												<Route path="/clients" element={<Clients />} />
+												<Route
+													path="/workshifts/:id"
+													element={<Workshifts />}
+												/>
 											</Routes>
 
 											{/* <Footer /> */}

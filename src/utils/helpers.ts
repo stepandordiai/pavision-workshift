@@ -18,3 +18,16 @@ export const extractNameInitials = (userName: string): string => {
 
 	return firstName + lastName;
 };
+
+// TODO:
+export const isValidTime = (time?: string) => {
+	return /^([01]\d|2[0-3]):[0-5]\d$/.test(time || "");
+};
+
+export const formatTime = (time?: string | null) => {
+	if (!time) return "";
+
+	const [hours, minutes] = time.split(":");
+
+	return `${hours}:${minutes}`;
+};

@@ -1,13 +1,11 @@
 import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import classNames from "classnames";
-// import TeamIcon from "../../icons/TeamIcon";
 import { extractNameInitials } from "../../../utils/helpers";
 import { supabase } from "../../../lib/supabase";
-import BoxArrowLeftIcon from "../../icons/BoxArrowLeftIcon";
-import "./Header.scss";
 import HouseIcon from "../../icons/HouseIcon";
 import TeamIcon from "../../icons/TeamIcon";
+import "./Header.scss";
 
 const Header = ({}) => {
 	const [menuVisible, setMenuVisible] = useState(false);
@@ -141,15 +139,14 @@ const Header = ({}) => {
 					<span>
 						<HouseIcon />
 					</span>
-					<span>Dashboard</span>
+					<span>Overview</span>
 				</NavLink>
 				<div className="menu-inner">
 					{!currentUser ? null : (
 						<>
 							<div className="sidebar-wrapper">
 								<div className="sidebar__title-btn">
-									{/* <TeamIcon size={20} /> */}
-									<h2>Members</h2>
+									<p>Members</p>
 								</div>
 								<div className="sidebar-wrapper-inner sidebar-wrapper-inner--visible">
 									<div className="sidebar-container">
@@ -178,19 +175,25 @@ const Header = ({}) => {
 						</>
 					)}
 				</div>
-				<NavLink
-					onClick={() => setMenuVisible(false)}
-					className={({ isActive }) =>
-						`sidebar__nav-link ${isActive ? "sidebar__nav-link--selected" : ""}`
-					}
-					to="/clients"
-				>
-					<span>
-						<TeamIcon />
-					</span>
-					<span>Clients</span>
-				</NavLink>
-				<div className="sidebar__current-user" style={{ marginTop: "auto" }}>
+				<div className="sidebar-wrapper">
+					<div className="sidebar__title-btn">
+						<p>Other</p>
+					</div>
+					<NavLink
+						onClick={() => setMenuVisible(false)}
+						className={({ isActive }) =>
+							`sidebar__nav-link ${isActive ? "sidebar__nav-link--selected" : ""}`
+						}
+						to="/clients"
+					>
+						<span>
+							<TeamIcon />
+						</span>
+						<span>Clients</span>
+					</NavLink>
+				</div>
+
+				<div style={{ marginTop: "auto" }}>
 					<NavLink
 						onClick={() => setMenuVisible(false)}
 						className={({ isActive }) =>
@@ -205,9 +208,6 @@ const Header = ({}) => {
 						</span>
 						<span>{currentUser?.full_name}</span>
 					</NavLink>
-					<button className="logout-btn" onClick={handleLogout}>
-						<BoxArrowLeftIcon size={20} />
-					</button>
 				</div>
 			</div>
 		</>

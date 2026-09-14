@@ -255,8 +255,9 @@ export default function Clients() {
 					value={deleteInput}
 					required
 				/>
-				<div>
+				<div style={{ display: "flex", gap: "5px" }}>
 					<button
+						className="clients__form-cancel-btn"
 						onClick={() => {
 							setDeleteModalVisible(false);
 							setClient(initClient);
@@ -266,7 +267,11 @@ export default function Clients() {
 					>
 						Cancel
 					</button>
-					<button disabled={loading} onClick={deleteClient}>
+					<button
+						className="clients__form-submit-btn"
+						disabled={loading}
+						onClick={deleteClient}
+					>
 						{loading ? "Deleting..." : "Delete"}
 					</button>
 				</div>
@@ -282,8 +287,13 @@ export default function Clients() {
 				})}
 			></div>
 			<section className="clients__section">
-				<h1 style={{ fontSize: "2rem" }}>Clients ({clients.length})</h1>
-				<button onClick={() => setFormVisible(true)}>Add</button>
+				<h1>Clients ({clients.length})</h1>
+				<button
+					className="clients__form-submit-btn"
+					onClick={() => setFormVisible(true)}
+				>
+					Add new client
+				</button>
 			</section>
 			<section className="clients-grid">
 				{clients.map((client) => {

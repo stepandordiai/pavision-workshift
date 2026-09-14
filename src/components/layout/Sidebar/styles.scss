@@ -51,7 +51,6 @@ a {
 
 	&--selected {
 		outline: 2px solid hsl(0, 0%, 0%);
-		font-weight: 500;
 	}
 
 	span:nth-child(1) {
@@ -62,29 +61,6 @@ a {
 		display: grid;
 		place-items: center;
 	}
-}
-
-.logout-btn {
-	background: rgb(227, 50, 50);
-	border-radius: 10px;
-	flex-shrink: 0;
-	width: 54px;
-	display: grid;
-	place-items: center;
-	aspect-ratio: 1/1;
-	transition: background-color 0.2s;
-	color: #fff;
-
-	&:hover {
-		background: rgb(159, 38, 38);
-	}
-}
-
-.sidebar__current-user {
-	display: flex;
-	align-items: center;
-	gap: 5px;
-	border-radius: 10px;
 }
 
 .sidebar__current-user-nav-link {

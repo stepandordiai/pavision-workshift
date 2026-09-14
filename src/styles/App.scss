@@ -32,10 +32,6 @@ body {
 	gap: 10px;
 }
 
-.main__title {
-	font-size: 1.5rem;
-}
-
 .section {
 	background: #fff;
 	padding: 10px;
@@ -45,15 +41,42 @@ body {
 	gap: 5px;
 }
 
-.section__heading-container {
-	display: flex;
-	align-items: center;
-	gap: 5px;
+label {
+	font-weight: 500;
 }
 
-.section__heading {
+h1 {
+	font-weight: 500;
+	font-size: 1.5rem;
+}
+
+h2 {
 	font-weight: 500;
 	font-size: 1.25rem;
+}
+
+input {
+	-webkit-appearance: none;
+	appearance: none;
+	padding: 5px;
+	border-radius: 5px;
+	outline: 2px solid hsl(0, 0%, 95%);
+	outline-offset: -2px;
+
+	&:focus {
+		outline: 2px solid hsl(0, 0%, 0%);
+	}
+}
+
+.overview__input {
+	width: 100%;
+}
+
+.section__heading-container {
+	display: flex;
+	// justify-content: center;
+	align-items: center;
+	gap: 5px;
 }
 
 .banner {

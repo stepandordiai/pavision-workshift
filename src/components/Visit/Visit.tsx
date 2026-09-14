@@ -118,7 +118,7 @@ const DayRow = ({
 			<div className="visit-container">
 				<div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
 					<div className="visit-input-container">
-						<p className="workshift__label">Start time</p>
+						<label>Start time</label>
 						<div className="workshift__input-wrapper">
 							<input
 								type="text"
@@ -198,7 +198,7 @@ const DayRow = ({
 						</div>
 					</div>
 					<div className="visit-input-container">
-						<p className="workshift__label">End time</p>
+						<label>End time</label>
 						<div className="workshift__input-wrapper">
 							<input
 								type="text"
@@ -279,7 +279,7 @@ const DayRow = ({
 						</div>
 					</div>
 					<div className="visit-input-container">
-						<p className="workshift__label">Pause</p>
+						<label>Pause</label>
 						<div className="workshift__input-wrapper">
 							<input
 								type="text"
@@ -359,7 +359,7 @@ const DayRow = ({
 						</div>
 					</div>
 					<div className="visit-input-container">
-						<p className="workshift__label">Extra time</p>
+						<label>Extra time</label>
 						<div className="workshift__input-wrapper">
 							<input
 								type="text"
@@ -445,7 +445,7 @@ const DayRow = ({
 						return (
 							<div className="workshift__grid" key={item.id}>
 								<div style={{ width: "1%", whiteSpace: "nowrap" }}>
-									<div className="workshift__label">Client</div>
+									<label>Client</label>
 									<select
 										style={{ width: "auto" }}
 										className={classNames("workshift__input", {
@@ -475,7 +475,7 @@ const DayRow = ({
 									</select>
 								</div>
 								<div>
-									<p className="workshift__label">Task</p>
+									<label>Task</label>
 									<AutoGrowTextArea
 										value={item.task}
 										handleChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
@@ -492,7 +492,7 @@ const DayRow = ({
 									/>
 								</div>
 								<div>
-									<p className="workshift__label">Time Spend</p>
+									<label>Time Spend</label>
 									<div className="workshift__input-wrapper">
 										<input
 											type="text"
@@ -1324,7 +1324,7 @@ const Visit = ({
 			<section className="section">
 				<div className="section__heading-container">
 					<ClockIcon size={20} />
-					<h2 className="section__heading">Workshift for the week</h2>
+					<h2>Workshift for the week</h2>
 				</div>
 				{weekShifts.map((day) => (
 					<DayRow
@@ -1348,7 +1348,7 @@ const Visit = ({
 			<section className="section">
 				<div className="section__heading-container">
 					<ClockIcon size={20} />
-					<h2 className="section__heading">Workshift for the month</h2>
+					<h2>Workshift for the month</h2>
 				</div>
 				{monthShifts.map((day) => (
 					<DayRow
@@ -1371,12 +1371,12 @@ const Visit = ({
 		<section className="section">
 			<div className="section__heading-container">
 				<ClockIcon size={20} />
-				<h2 className="section__heading">Workshift</h2>
+				<h2>Workshift</h2>
 			</div>
 			<div className="visit-container">
 				<div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
 					<div className="visit-input-container">
-						<span className="workshift__label">Start time</span>
+						<label>Start time</label>
 						<div className="workshift__input-wrapper">
 							<input
 								type="text"
@@ -1447,7 +1447,7 @@ const Visit = ({
 						</div>
 					</div>
 					<div className="visit-input-container">
-						<span className="workshift__label">End time</span>
+						<label>End time</label>
 						<div className="workshift__input-wrapper">
 							<input
 								type="text"
@@ -1518,7 +1518,7 @@ const Visit = ({
 						</div>
 					</div>
 					<div className="visit-input-container">
-						<span className="workshift__label">Pause time</span>
+						<label>Pause time</label>
 						<div className="workshift__input-wrapper">
 							<input
 								type="text"
@@ -1589,7 +1589,7 @@ const Visit = ({
 						</div>
 					</div>
 					<div className="visit-input-container">
-						<span className="workshift__label">Extra time</span>
+						<label>Extra time</label>
 						<div className="workshift__input-wrapper">
 							<input
 								type="text"
@@ -1668,7 +1668,7 @@ const Visit = ({
 					}}
 				>
 					<div className="visit-input-container">
-						<span className="workshift__label">Total</span>
+						<label>Total</label>
 						<p className="workshift__input">{total}</p>
 					</div>
 				</div>
@@ -1678,7 +1678,7 @@ const Visit = ({
 					return (
 						<div className="workshift__grid" key={item.id}>
 							<div style={{ width: "1%", whiteSpace: "nowrap" }}>
-								<div className="workshift__label">Client</div>
+								<label>Client</label>
 								<select
 									style={{ width: "auto" }}
 									className={classNames("workshift__input", {
@@ -1703,7 +1703,7 @@ const Visit = ({
 								</select>
 							</div>
 							<div>
-								<p className="workshift__label">Task</p>
+								<label>Task</label>
 								<AutoGrowTextArea
 									value={item.task}
 									handleChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
@@ -1715,7 +1715,7 @@ const Visit = ({
 								/>
 							</div>
 							<div>
-								<p className="workshift__label">Time Spend</p>
+								<label>Time Spend</label>
 								<div className="workshift__input-wrapper">
 									<input
 										type="text"

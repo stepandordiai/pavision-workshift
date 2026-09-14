@@ -1,17 +1,12 @@
 import { NavLink } from "react-router-dom";
 import { supabase } from "../../../lib/supabase";
 import { useEffect, useState } from "react";
-import BoxArrowLeftIcon from "../../icons/BoxArrowLeftIcon";
 import { extractNameInitials } from "../../../utils/helpers";
 import HouseIcon from "../../icons/HouseIcon";
 import "./styles.scss";
 import TeamIcon from "../../icons/TeamIcon";
 
 const Sidebar = () => {
-	const handleLogout = async () => {
-		await supabase.auth.signOut();
-	};
-
 	const [data, setData] = useState<{ id: string; full_name: string }[]>([]);
 	const [error, setError] = useState<string | null>(null);
 	const [currentUser, setCurrentUser] = useState<{
@@ -59,10 +54,10 @@ const Sidebar = () => {
 					<span>
 						<HouseIcon />
 					</span>
-					<span>Dashboard</span>
+					<span>Overview</span>
 				</NavLink>
 				<div className="sidebar-container">
-					<p>Members</p>
+					<p>Members ({data.length + 1})</p>
 					<div className="sidebar-dd">
 						{data?.map((member) => {
 							return (
@@ -84,19 +79,22 @@ const Sidebar = () => {
 						})}
 					</div>
 				</div>
-				<NavLink
-					className={({ isActive }) =>
-						`sidebar__nav-link ${isActive ? "sidebar__nav-link--selected" : ""}`
-					}
-					to={"/clients"}
-				>
-					<span>
-						<TeamIcon />
-					</span>
-					<span>Clients</span>
-				</NavLink>
+				<div className="sidebar-container">
+					<p>Other</p>
+					<NavLink
+						className={({ isActive }) =>
+							`sidebar__nav-link ${isActive ? "sidebar__nav-link--selected" : ""}`
+						}
+						to={"/clients"}
+					>
+						<span>
+							<TeamIcon />
+						</span>
+						<span>Clients</span>
+					</NavLink>
+				</div>
 			</nav>
-			<div className="sidebar__current-user" style={{ marginTop: "auto" }}>
+			<div style={{ marginTop: "auto" }}>
 				<NavLink
 					className={({ isActive }) =>
 						`sidebar__nav-link ${isActive ? "sidebar__nav-link--selected" : ""}`
@@ -110,9 +108,6 @@ const Sidebar = () => {
 					</span>
 					<span>{currentUser?.full_name}</span>
 				</NavLink>
-				<button className="logout-btn" onClick={handleLogout}>
-					<BoxArrowLeftIcon size={20} />
-				</button>
 			</div>
 		</aside>
 	);

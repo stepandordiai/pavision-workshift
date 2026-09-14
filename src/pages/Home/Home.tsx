@@ -3,6 +3,7 @@ import { supabase } from "../../lib/supabase";
 import timeToMinutes from "../../utils/timeToMinutes";
 import { NavLink } from "react-router-dom";
 import StatusIndicator from "../../components/StatusIndicator/StatusIndicator";
+import ClockIcon from "../../components/icons/ClockIcon";
 import "./styles.scss";
 
 const shiftTotalMinutes = (shift: {
@@ -21,20 +22,58 @@ const shiftTotalMinutes = (shift: {
 	return end - start - pause + over;
 };
 
-const formatDisplayDate = (dateStr: string) => {
-	const [year, month, day] = dateStr.split("-");
-	return `${day}.${month}.${year}`;
+const parseLocalDate = (dateStr: string) => {
+	const [year, month] = dateStr.split("-").map(Number);
+	return new Date(year, month - 1);
+};
+
+// TODO: learn this
+const getMonthName = (dateStr: string) => {
+	const date = parseLocalDate(dateStr);
+	return date.toLocaleDateString("en-US", { month: "long" });
 };
 
 const Home = () => {
 	const [loading, setLoading] = useState<boolean>(false);
 	const [error, setError] = useState<string | null>(null);
 	const [data, setData] = useState<{ id: string; full_name: string }[]>([]);
-	const [monthRange, setMonthRange] = useState<{
-		from: string;
-		to: string;
-	} | null>(null);
 	const [memberHours, setMemberHours] = useState<Record<string, string>>({});
+
+	const now = new Date();
+
+	const currentMonth = `${now.getFullYear()}-${String(
+		now.getMonth() + 1,
+	).padStart(2, "0")}`;
+	const [monthShift, setMonthShift] = useState(currentMonth);
+
+	const getMonthRange = (month: string) => {
+		if (!month) {
+			return {
+				from: "",
+				to: "",
+			};
+		}
+
+		const [year, monthNumber] = month.split("-").map(Number);
+
+		const firstDay = new Date(year, monthNumber - 1, 1);
+		const lastDay = new Date(year, monthNumber, 0);
+
+		const formatDate = (date: Date) => {
+			const year = date.getFullYear();
+			const month = String(date.getMonth() + 1).padStart(2, "0");
+			const day = String(date.getDate()).padStart(2, "0");
+
+			return `${year}-${month}-${day}`;
+		};
+
+		return {
+			from: formatDate(firstDay),
+			to: formatDate(lastDay),
+		};
+	};
+
+	const { from, to } = getMonthRange(monthShift);
 
 	useEffect(() => {
 		const fetchMembersAndHours = async () => {
@@ -42,15 +81,6 @@ const Home = () => {
 			setError(null);
 
 			try {
-				const now = new Date();
-				const year = now.getFullYear();
-				const month = now.getMonth(); // 0-indexed
-				const from = `${year}-${String(month + 1).padStart(2, "0")}-01`;
-				const daysInMonth = new Date(year, month + 1, 0).getDate();
-				const to = `${year}-${String(month + 1).padStart(2, "0")}-${String(daysInMonth).padStart(2, "0")}`;
-
-				setMonthRange({ from, to });
-
 				const [
 					{ data: members, error: membersError },
 					{ data: shifts, error: shiftsError },
@@ -94,40 +124,57 @@ const Home = () => {
 		};
 
 		fetchMembersAndHours();
-	}, []);
+	}, [monthShift]);
 
 	return (
 		<>
 			<section className="section">
-				<h1 className="main__title">Dashboard</h1>
+				<h1>Overview</h1>
 			</section>
-			<div>
-				<h2>Workshifts</h2>
-				<div>
-					{monthRange && (
-						<p className="dashboard__period">
-							Total hours in period from {formatDisplayDate(monthRange.from)} to{" "}
-							{formatDisplayDate(monthRange.to)}
-						</p>
-					)}
+			<section className="section">
+				<div
+					style={{
+						display: "flex",
+						justifyContent: "space-between",
+						alignItems: "flex-start",
+						flexWrap: "wrap",
+						gap: "5px",
+					}}
+				>
+					<div className="section__heading-container">
+						<ClockIcon size={20} />
+						<h2 className="section__heading">Workshifts</h2>
+					</div>
+					<div>
+						<label htmlFor="">Choose month to see total hours</label>
+						<input
+							className="overview__input"
+							type="month"
+							onChange={(e) => setMonthShift(e.target.value)}
+							value={monthShift}
+						/>
+					</div>
 				</div>
-				<div className="dashboard__members-grid">
-					{data.map((member) => (
-						<NavLink
-							to={`/users/${member.id}`}
-							key={member.id}
-							className="dashboard__member-card"
-						>
-							<p>{member.full_name}</p>
-							<div className="dashboard__member-total">
-								<span>Total</span>
-								<p className="dashboard__member-label">
-									{memberHours[member.id] ?? "00:00"}
-								</p>
-							</div>
-						</NavLink>
-					))}
-				</div>
+			</section>
+			<div className="dashboard__members-grid">
+				{data.map((member) => (
+					<NavLink
+						to={`/workshifts/${member.id}`}
+						key={member.id}
+						className="dashboard__member-card"
+					>
+						<label>{member.full_name}</label>
+						<div className="dashboard__member-total">
+							<span>
+								Total hours {getMonthName(monthShift)}{" "}
+								{parseLocalDate(monthShift).getFullYear()}
+							</span>
+							<p className="dashboard__member-label">
+								{memberHours[member.id] ?? "00:00"}
+							</p>
+						</div>
+					</NavLink>
+				))}
 			</div>
 			<StatusIndicator loading={loading} error={error} />
 		</>
