@@ -22,7 +22,7 @@ const Login = () => {
 		try {
 			if (forgotPassword) {
 				if (!email) {
-					setAuthError("Введіть правильний електронний адрес");
+					setAuthError("Enter correct email");
 					return;
 				}
 
@@ -36,6 +36,10 @@ const Login = () => {
 				return;
 			}
 
+			if (authMode === "signup" && name.trim().split(/\s+/).length !== 2) {
+				setAuthError("Enter correct full name (example: John Doe)");
+				return;
+			}
 			const { error } =
 				authMode === "signin"
 					? await supabase.auth.signInWithPassword({ email, password })
@@ -60,7 +64,7 @@ const Login = () => {
 				<img src="/logo.svg" width={100} alt="" />
 				<h1 style={{ fontSize: "2rem" }}>Workshift</h1>
 			</div>
-			{authError && <strong style={{ color: "red" }}>Access denied</strong>}
+			{authError && <strong style={{ color: "red" }}>{authError}</strong>}
 			<form className="login-form" onSubmit={handleAuth}>
 				<p className="login__form-heading">
 					{authMode === "signup" ? "Sign up" : "Sign in"}
@@ -69,7 +73,7 @@ const Login = () => {
 				{authMode === "signup" && (
 					<div className="login-input-container">
 						<label className="auth-label" htmlFor="auth-name">
-							Name
+							Full name
 						</label>
 						<input
 							id="auth-name"

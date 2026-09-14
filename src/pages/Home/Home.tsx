@@ -102,7 +102,7 @@ const Home = () => {
 				<h1 className="main__title">Dashboard</h1>
 			</section>
 			<div>
-				<h2>Members</h2>
+				<h2>Workshifts</h2>
 				<div>
 					{monthRange && (
 						<p className="dashboard__period">

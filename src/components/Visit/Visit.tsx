@@ -658,6 +658,7 @@ const Visit = ({
 	const editable = currentUser?.id === userId;
 	const [savingDate, setSavingDate] = useState<string | null>(null);
 	const [savingMonthDate, setSavingMonthDate] = useState<string | null>(null);
+	const [totalError, setTotalError] = useState<Error | null>(null);
 
 	// TODO: LEARN THIS (FETCH CLIENTS)
 	const {
@@ -1262,12 +1263,15 @@ const Visit = ({
 	useEffect(() => {
 		if (!isValidTime(data.startTime) || !isValidTime(data.endTime)) {
 			setTotal("00:00");
+			setTotalError(null);
 			return;
 		}
 
 		const start = timeToMinutes(data.startTime);
 		const end = timeToMinutes(data.endTime);
+
 		const over = isValidTime(data.overTime) ? timeToMinutes(data.overTime) : 0;
+
 		const pause = isValidTime(data.pauseTime)
 			? timeToMinutes(data.pauseTime)
 			: 0;
@@ -1278,8 +1282,24 @@ const Visit = ({
 		const minutes = totalMinutes % 60;
 
 		setTotal(
-			`${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`,
+			`${hours.toString().padStart(2, "0")}:${minutes
+				.toString()
+				.padStart(2, "0")}`,
 		);
+
+		const totalTimeSpendMinutes = data.workDone.reduce((sum, work) => {
+			if (!isValidTime(work.time)) return sum;
+
+			return sum + timeToMinutes(work.time);
+		}, 0);
+
+		if (totalMinutes !== totalTimeSpendMinutes) {
+			setTotalError(
+				new Error("Total time spent should be equal to total working time"),
+			);
+		} else {
+			setTotalError(null);
+		}
 	}, [data, shiftDate]);
 
 	const error =
@@ -1290,6 +1310,7 @@ const Visit = ({
 		saveDayShiftError ||
 		saveWeekShiftError ||
 		saveMonthShiftError ||
+		totalError ||
 		null;
 
 	useEffect(() => {
